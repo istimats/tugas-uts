@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daftar - KopSim</title>
+    <link rel="stylesheet" href="/register.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <a href="/auth/landing" class="logo">Kop</a>
+                <h1 class="auth-title">Registrasi</h1>
+                <p class="auth-subtitle">Bergabung dengan KOPDAR untuk masa depan finansial yang lebih baik</p>
+            </div>
+
+            <form action="/auth/register" method="POST">
+                <div class="form-group">
+                    
+                    <input type="text" class="form-input" name="username" placeholder="Masukkan username" required>
+                </div>
+
+            
+                <div class="form-group">
+                    
+                    <div class="password-toggle">
+                        <input type="password" class="form-input" name="password" placeholder="Minimal 8 karakter" required>
+                        <span class="toggle-icon">👁️</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    
+                    <div class="password-toggle">
+                        <input type="password" class="form-input" name="password_confirmation" placeholder="Ulangi password" required>
+                        <span class="toggle-icon">👁️</span>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn">Daftar Sekarang</button>
+            </form>
+
+            <div class="auth-footer">
+                Sudah punya akun? <a href="/auth/login">Masuk</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Toggle password visibility
+        document.querySelectorAll('.toggle-icon').forEach(icon => {
+            icon.addEventListener('click', () => {
+                const input = icon.previousElementSibling;
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.textContent = '👁️‍🗨️';
+                } else {
+                    input.type = 'password';
+                    icon.textContent = '👁️';
+                }
+            });
+        });
+
+        // Form validation
+        document.querySelector('form').addEventListener('submit', (e) => {
+            const password = document.querySelector('input[name="password"]');
+            const confirmation = document.querySelector('input[name="password_confirmation"]');
+            
+            if (password.value.length < 8) {
+                e.preventDefault();
+                alert('Password harus minimal 8 karakter!');
+            }
+            
+            if (password.value !== confirmation.value) {
+                e.preventDefault();
+                alert('Password dan konfirmasi password tidak cocok!');
+            }
+        });
+    </script>
+</body>
+</html>

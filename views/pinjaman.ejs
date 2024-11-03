@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Pinjaman - KopSim</title>
+
+    <link rel="stylesheet" href="/pinjaman.css">
+    
+</head>
+<body>
+    <div class="container">
+        <h1>Data Pinjaman</h1>
+        
+        <div id="alertSuccess" class="alert alert-success">
+            Data berhasil diperbarui!
+        </div>
+
+        <form id="pinjamanForm">
+            <input type="text" id="anggota_id" placeholder="ID Anggota" required>
+            <input type="text" id="nama_anggota" placeholder="Nama Anggota" required>
+            <input type="number" id="jumlah" placeholder="Jumlah Pinjaman" required>
+            <input type="date" id="tanggal" required>
+            <button type="submit">Tambah Pinjaman</button>
+        </form>
+
+        <!-- Tabel Data Pinjaman -->
+        <table>
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>ID Anggota</th>
+                    <th>Nama</th>
+                    <th>Jumlah</th>
+                    <th>Tanggal</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody id="pinjamanList"></tbody>
+        </table>
+    </div>
+
+    <div id="updateModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Update Pinjaman</h2>
+                <span class="close">&times;</span>
+            </div>
+            <form id="updateForm">
+                <input type="hidden" id="updateId">
+                <div class="form-group">
+                    <label>Jumlah Baru</label>
+                    <input type="number" id="updateJumlah" required>
+                </div>
+                <div class="form-group">
+                    <label>Tanggal Baru</label>
+                    <input type="date" id="updateTanggal" required>
+                </div>
+                <button type="submit">Update Pinjaman</button>
+            </form>
+        </div>
+    </div>
+    <a href="/"><button class="btn">Kembali</button></a>
+    <script>
+        const modal = document.getElementById('updateModal');
+        const closeBtn = document.querySelector('.close');
+        const alertSuccess = document.getElementById('alertSuccess');
+
+        async function fetchPinjaman() {
+            try {
+                const response = await fetch('/pinjaman');
+                const data = await response.json();
+                const pinjamanList = document.getElementById('pinjamanList');
+                pinjamanList.innerHTML = data.map(p => `
+                    <tr>
+                        <td>${p.id}</td>
+                        <td>${p.anggota_id}</td>
+                        <td>${p.nama_anggota}</td>
+                        <td>Rp ${Number(p.jumlah).toLocaleString('id-ID')}</td>
+                        <td>${new Date(p.tanggal).toLocaleDateString('id-ID')}</td>
+                        <td>
+                            <button onclick="showUpdateModal(${p.id}, ${p.jumlah}, '${p.tanggal}')">Update</button>
+                            <button onclick="deletePinjaman(${p.id})">Delete</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        document.getElementById('pinjamanForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            form.classList.add('loading');
+
+            try {
+                const anggota_id = document.getElementById('anggota_id').value;
+                const jumlah = document.getElementById('jumlah').value;
+                const tanggal = document.getElementById('tanggal').value;
+
+                await fetch('/pinjaman', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ anggota_id, jumlah, tanggal })
+                });
+
+                form.reset();
+                showAlert('Data berhasil ditambahkan!');
+                await fetchPinjaman();
+            } catch (error) {
+                console.error('Error:', error);
+            } finally {
+                form.classList.remove('loading');
+            }
+        };
+
+        function showUpdateModal(id, jumlah, tanggal) {
+            document.getElementById('updateId').value = id;
+            document.getElementById('updateJumlah').value = jumlah;
+            document.getElementById('updateTanggal').value = tanggal;
+            modal.style.display = 'flex';
+        }
+
+        closeBtn.onclick = () => {
+            modal.style.display = 'none';
+        }
+
+        window.onclick = (e) => {
+            if (e.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        document.getElementById('updateForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            form.classList.add('loading');
+
+            try {
+                const id = document.getElementById('updateId').value;
+                const jumlah = document.getElementById('updateJumlah').value;
+                const tanggal = document.getElementById('updateTanggal').value;
+
+                await fetch(`/pinjaman/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ jumlah, tanggal })
+                });
+
+                modal.style.display = 'none';
+                showAlert('Data berhasil diupdate!');
+                await fetchPinjaman();
+            } catch (error) {
+                console.error('Error:', error);
+            } finally {
+                form.classList.remove('loading');
+            }
+        };
+
+        async function deletePinjaman(id) {
+            if (confirm('Apakah Anda yakin ingin menghapus data ini?')) {
+                try {
+                    await fetch(`/pinjaman/${id}`, { method: 'DELETE' });
+                    showAlert('Data berhasil dihapus!');
+                    await fetchPinjaman();
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+            }
+        }
+
+        function showAlert(message) {
+            alertSuccess.textContent = message;
+            alertSuccess.style.display = 'block';
+            setTimeout(() => {
+                alertSuccess.style.display = 'none';
+            }, 3000);
+        }
+
+        fetchPinjaman();
+    </script>
+</body>
+</html>

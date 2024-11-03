@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daftar Anggota - KopSim</title>
+
+    <link rel="stylesheet" href="/anggota.css">
+    
+        
+</head>
+<body>
+    <div class="container">
+        <h1>Daftar Anggota</h1>
+
+        <div id="alertSuccess" class="alert alert-success">
+            Data berhasil diperbarui!
+        </div>
+
+        <!-- Form untuk Menambahkan Anggota -->
+        <form id="anggotaForm">
+            <input type="text" id="nama" placeholder="Nama" required>
+            <input type="text" id="alamat" placeholder="Alamat" required>
+            <button type="submit">Tambah Anggota</button>
+        </form>
+
+        <!-- Tabel Data Anggota -->
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nama</th>
+                    <th>Alamat</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody id="anggotaList"></tbody>
+        </table>
+    </div>
+
+    <!-- Modal Update Anggota -->
+    <div id="updateModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Update Anggota</h2>
+                <span class="close">&times;</span>
+            </div>
+            <form id="updateForm">
+                <input type="hidden" id="updateId">
+                <div>
+                    <label>Nama Baru</label>
+                    <input type="text" id="updateNama" required>
+                </div>
+                <div>
+                    <label>Alamat Baru</label>
+                    <input type="text" id="updateAlamat" required>
+                </div>
+                <button type="submit">Update Anggota</button>
+            </form>
+        </div>
+    </div>
+    <a href="/"><button class="btn">Kembali</button></a>
+    <script>
+        const alertSuccess = document.getElementById('alertSuccess');
+        const modal = document.getElementById('updateModal');
+        const closeModalBtn = document.querySelector('.close');
+
+        async function fetchAnggota() {
+            try {
+                const response = await fetch('/anggota');
+                const anggota = await response.json();
+                const anggotaList = document.getElementById('anggotaList');
+                anggotaList.innerHTML = anggota.map(a => `
+                    <tr>
+                        <td>${a.id}</td>
+                        <td>${a.nama}</td>
+                        <td>${a.alamat}</td>
+                        <td>
+                            <button class="action-button" onclick="showUpdateModal(${a.id}, '${a.nama}', '${a.alamat}')">Update</button>
+                            <button class="action-button delete-button" onclick="deleteAnggota(${a.id})">Hapus</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        document.getElementById('anggotaForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const form = e.target;
+
+            try {
+                const nama = document.getElementById('nama').value;
+                const alamat = document.getElementById('alamat').value;
+
+                await fetch('/anggota', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nama, alamat })
+                });
+
+                form.reset();
+                showAlert('Data anggota berhasil ditambahkan!');
+                await fetchAnggota();
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        };
+
+        function showUpdateModal(id, nama, alamat) {
+            document.getElementById('updateId').value = id;
+            document.getElementById('updateNama').value = nama;
+            document.getElementById('updateAlamat').value = alamat;
+            modal.style.display = 'flex';
+        }
+
+        document.getElementById('updateForm').onsubmit = async (e) => {
+            e.preventDefault();
+            try {
+                const id = document.getElementById('updateId').value;
+                const nama = document.getElementById('updateNama').value;
+                const alamat = document.getElementById('updateAlamat').value;
+
+                await fetch(`/anggota/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nama, alamat })
+                });
+
+                modal.style.display = 'none';
+                showAlert('Data anggota berhasil diperbarui!');
+                await fetchAnggota();
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        };
+
+        async function deleteAnggota(id) {
+            if (confirm('Apakah Anda yakin ingin menghapus data anggota ini?')) {
+                try {
+                    await fetch(`/anggota/${id}`, { method: 'DELETE' });
+                    showAlert('Data anggota berhasil dihapus!');
+                    await fetchAnggota();
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+            }
+        }
+
+        function showAlert(message) {
+            alertSuccess.textContent = message;
+            alertSuccess.style.display = 'block';
+            setTimeout(() => {
+                alertSuccess.style.display = 'none';
+            }, 3000);
+        }
+
+        closeModalBtn.onclick = () => {
+            modal.style.display = 'none';
+        };
+
+        window.onclick = (e) => {
+            if (e.target == modal) {
+                modal.style.display = 'none';
+            }
+        };
+
+        fetchAnggota();
+    </script>
+</body>
+</html>
